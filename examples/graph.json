@@ -1,0 +1,441 @@
+{
+  "nodes": [
+    {
+      "id": "module.app.aws_lb.app",
+      "type": "aws_lb",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.app",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:elasticloadbalancing:us-east-1:111111111111:loadbalancer/app/app/c921bb37-3946-4269-9d05-4df9e1334cef",
+      "tags": {
+        "app": "frontend"
+      },
+      "layer": "platforms"
+    },
+    {
+      "id": "module.app.aws_lb_listener.http",
+      "type": "aws_lb_listener",
+      "icon": "aws/other",
+      "modulePath": "module.app",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "layer": "platforms"
+    },
+    {
+      "id": "module.app.aws_lb_target_group.app",
+      "type": "aws_lb_target_group",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.app",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:elasticloadbalancing:us-east-1:111111111111:targetgroup/app/3a96c758-f81d-43b2-83ab-48fd1534f289",
+      "tags": {
+        "app": "frontend"
+      },
+      "layer": "platforms"
+    },
+    {
+      "id": "module.db.aws_db_instance.app",
+      "type": "aws_db_instance",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.db",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:rds:us-east-1:111111111111:db:appdb-1",
+      "tags": {
+        "service": "db"
+      },
+      "layer": "apps"
+    },
+    {
+      "id": "module.eks.aws_eks_cluster.main",
+      "type": "aws_eks_cluster",
+      "icon": "aws/eks",
+      "region": "us-east-1",
+      "modulePath": "module.eks",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:eks:us-east-1:111111111111:cluster/main",
+      "tags": {
+        "platform": "eks"
+      },
+      "layer": "platforms"
+    },
+    {
+      "id": "module.eks.aws_eks_node_group.ng1",
+      "type": "aws_eks_node_group",
+      "icon": "aws/eks",
+      "region": "us-east-1",
+      "modulePath": "module.eks",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:eks:us-east-1:111111111111:nodegroup/main/ng1/b00b769d-f05c-4fed-aa72-8bfb84ba8b94",
+      "tags": {
+        "role": "worker"
+      },
+      "layer": "platforms"
+    },
+    {
+      "id": "module.iam.aws_iam_role.eks_cluster",
+      "type": "aws_iam_role",
+      "icon": "aws/iam",
+      "region": "us-east-1",
+      "modulePath": "module.iam",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:iam:us-east-1:111111111111:role/eks-cluster-role",
+      "tags": {
+        "team": "platform"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.iam.aws_iam_role.eks_node",
+      "type": "aws_iam_role",
+      "icon": "aws/iam",
+      "region": "us-east-1",
+      "modulePath": "module.iam",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:iam:us-east-1:111111111111:role/eks-node-role",
+      "tags": {
+        "team": "platform"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.kms.aws_kms_key.general",
+      "type": "aws_kms_key",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.kms",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:kms:us-east-1:111111111111:key/6a964d6c-23b6-4dc7-8120-c35d3e595324",
+      "tags": {
+        "owner": "security"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.msg.aws_sns_topic.alerts",
+      "type": "aws_sns_topic",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.msg",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:sns:us-east-1:111111111111:alerts",
+      "tags": {
+        "scope": "global"
+      },
+      "layer": "apps"
+    },
+    {
+      "id": "module.msg.aws_sns_topic_subscription.work_sub",
+      "type": "aws_sns_topic_subscription",
+      "icon": "aws/other",
+      "modulePath": "module.msg",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "d0b000d0-0645-44ea-ac85-3e6005352596",
+      "layer": "apps"
+    },
+    {
+      "id": "module.msg.aws_sqs_queue.work",
+      "type": "aws_sqs_queue",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.msg",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:sqs:us-east-1:111111111111:work-queue",
+      "tags": {
+        "purpose": "jobs"
+      },
+      "layer": "apps"
+    },
+    {
+      "id": "module.s3.aws_s3_bucket.logs",
+      "type": "aws_s3_bucket",
+      "icon": "aws/s3",
+      "region": "us-east-1",
+      "modulePath": "module.s3",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:s3:::my-logs-bucket-abc",
+      "tags": {
+        "purpose": "access-logs"
+      },
+      "layer": "apps"
+    },
+    {
+      "id": "module.vpc.aws_internet_gateway.this",
+      "type": "aws_internet_gateway",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:ec2:us-east-1:111111111111:internet-gateway/igw-0abc",
+      "tags": {
+        "Name": "main-igw"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_route.public_internet_gateway",
+      "type": "aws_route",
+      "icon": "aws/other",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_route_table.public",
+      "type": "aws_route_table",
+      "icon": "aws/other",
+      "region": "us-east-1",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:ec2:us-east-1:111111111111:route-table/rtb-0pub",
+      "tags": {
+        "Name": "public-rt"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_route_table_association.public[0]",
+      "type": "aws_route_table_association",
+      "icon": "aws/other",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "rtbassoc-1",
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_route_table_association.public[1]",
+      "type": "aws_route_table_association",
+      "icon": "aws/other",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "rtbassoc-2",
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_subnet.public[0]",
+      "type": "aws_subnet",
+      "icon": "aws/subnet",
+      "region": "us-east-1",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:ec2:us-east-1:111111111111:subnet/subnet-0pub1",
+      "tags": {
+        "kubernetes": "shared",
+        "tier": "public"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_subnet.public[1]",
+      "type": "aws_subnet",
+      "icon": "aws/subnet",
+      "region": "us-east-1",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:ec2:us-east-1:111111111111:subnet/subnet-0pub2",
+      "tags": {
+        "kubernetes": "shared",
+        "tier": "public"
+      },
+      "layer": "foundations"
+    },
+    {
+      "id": "module.vpc.aws_vpc.main",
+      "type": "aws_vpc",
+      "icon": "aws/vpc",
+      "region": "us-east-1",
+      "modulePath": "module.vpc",
+      "provider": "registry.terraform.io/hashicorp/aws",
+      "urn": "arn:aws:ec2:us-east-1:111111111111:vpc/vpc-0abc1111",
+      "tags": {
+        "component": "networking",
+        "env": "dev"
+      },
+      "layer": "foundations"
+    }
+  ],
+  "edges": [
+    {
+      "source": "module.app.aws_lb.app",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.app.aws_lb_listener.http",
+      "target": "module.app.aws_lb.app",
+      "kind": "dep"
+    },
+    {
+      "source": "module.app.aws_lb_listener.http",
+      "target": "module.app.aws_lb_target_group.app",
+      "kind": "dep"
+    },
+    {
+      "source": "module.app.aws_lb_target_group.app",
+      "target": "module.app.aws_lb.app",
+      "kind": "dep"
+    },
+    {
+      "source": "module.db.aws_db_instance.app",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.eks.aws_eks_cluster.main",
+      "target": "module.iam.aws_iam_role.eks_cluster",
+      "kind": "dep"
+    },
+    {
+      "source": "module.eks.aws_eks_cluster.main",
+      "target": "module.vpc.aws_subnet.public[0]",
+      "kind": "dep"
+    },
+    {
+      "source": "module.eks.aws_eks_cluster.main",
+      "target": "module.vpc.aws_subnet.public[1]",
+      "kind": "dep"
+    },
+    {
+      "source": "module.eks.aws_eks_node_group.ng1",
+      "target": "module.eks.aws_eks_cluster.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.eks.aws_eks_node_group.ng1",
+      "target": "module.iam.aws_iam_role.eks_node",
+      "kind": "dep"
+    },
+    {
+      "source": "module.msg.aws_sns_topic_subscription.work_sub",
+      "target": "module.msg.aws_sns_topic.alerts",
+      "kind": "dep"
+    },
+    {
+      "source": "module.msg.aws_sns_topic_subscription.work_sub",
+      "target": "module.msg.aws_sqs_queue.work",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_internet_gateway.this",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route.public_internet_gateway",
+      "target": "module.vpc.aws_internet_gateway.this",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route.public_internet_gateway",
+      "target": "module.vpc.aws_route_table.public",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route_table.public",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route_table_association.public[0]",
+      "target": "module.vpc.aws_route.public_internet_gateway",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route_table_association.public[0]",
+      "target": "module.vpc.aws_subnet.public[0]",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route_table_association.public[1]",
+      "target": "module.vpc.aws_route.public_internet_gateway",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_route_table_association.public[1]",
+      "target": "module.vpc.aws_subnet.public[1]",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_subnet.public[0]",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    },
+    {
+      "source": "module.vpc.aws_subnet.public[1]",
+      "target": "module.vpc.aws_vpc.main",
+      "kind": "dep"
+    }
+  ],
+  "compounds": [
+    {
+      "id": "module.db",
+      "label": "db",
+      "children": [
+        "module.db.aws_db_instance.app"
+      ]
+    },
+    {
+      "id": "module.msg",
+      "label": "msg",
+      "children": [
+        "module.msg.aws_sns_topic.alerts",
+        "module.msg.aws_sns_topic_subscription.work_sub",
+        "module.msg.aws_sqs_queue.work"
+      ]
+    },
+    {
+      "id": "module.app",
+      "label": "app",
+      "children": [
+        "module.app.aws_lb.app",
+        "module.app.aws_lb_listener.http",
+        "module.app.aws_lb_target_group.app"
+      ]
+    },
+    {
+      "id": "module.vpc",
+      "label": "vpc",
+      "children": [
+        "module.vpc.aws_internet_gateway.this",
+        "module.vpc.aws_route.public_internet_gateway",
+        "module.vpc.aws_route_table.public",
+        "module.vpc.aws_route_table_association.public[0]",
+        "module.vpc.aws_route_table_association.public[1]",
+        "module.vpc.aws_subnet.public[0]",
+        "module.vpc.aws_subnet.public[1]",
+        "module.vpc.aws_vpc.main"
+      ]
+    },
+    {
+      "id": "module.iam",
+      "label": "iam",
+      "children": [
+        "module.iam.aws_iam_role.eks_cluster",
+        "module.iam.aws_iam_role.eks_node"
+      ]
+    },
+    {
+      "id": "module.kms",
+      "label": "kms",
+      "children": [
+        "module.kms.aws_kms_key.general"
+      ]
+    },
+    {
+      "id": "module.s3",
+      "label": "s3",
+      "children": [
+        "module.s3.aws_s3_bucket.logs"
+      ]
+    },
+    {
+      "id": "module.eks",
+      "label": "eks",
+      "children": [
+        "module.eks.aws_eks_cluster.main",
+        "module.eks.aws_eks_node_group.ng1"
+      ]
+    }
+  ]
+}

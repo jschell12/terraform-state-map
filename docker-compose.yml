@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile # the backend one you added
+    environment:
+      # allow your local web app to call the API
+      - ALLOW_ORIGIN=${WEB_ORIGIN-http://localhost:5173}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173 --open=false"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - VITE_API_URL=http://api:8080
+      - BROWSER=none
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
