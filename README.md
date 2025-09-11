@@ -4,9 +4,9 @@ Purpose: parse a Terraform state file and emit a graph JSON, then visualize it w
 
 ## Quick start
 
-### 1) Build extractor (Go >= 1.21)
+### 1) Build backend (Go >= 1.21)
 ```bash
-cd extractor
+cd backend
 go mod tidy
 go build -o tfmap
 ```
