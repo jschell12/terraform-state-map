@@ -53,5 +53,16 @@ export default defineConfig({
     target: 'esnext',
     outDir: 'build',
   },
-  server: { host: true, port: 5173, open: false }
+  server: {
+    host: true,
+    port: 5173,
+    open: false,
+    proxy: {
+      '/api': {
+        target: 'http://api:8080',
+        changeOrigin: true,
+        rewrite: p => p.replace(/^\/api/, ''),
+      },
+    },
+  },
 });

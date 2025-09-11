@@ -6,11 +6,34 @@ import (
 	"strings"
 )
 
+// --- v4 fallback ---
+type legacyState struct {
+	Resources []legacyRes `json:"resources"`
+}
+
+type legacyRes struct {
+	Mode      string       `json:"mode"`
+	Type      string       `json:"type"`
+	Name      string       `json:"name"`
+	Provider  string       `json:"provider"`
+	Instances []legacyInst `json:"instances"`
+}
+
+type legacyInst struct {
+	IndexKey            any            `json:"index_key"`
+	Attributes          map[string]any `json:"attributes"`
+	SensitiveAttributes []any          `json:"sensitive_attributes"`
+}
+
 // Minimal state model to avoid Terraform libs.
 type State struct {
+	// v5+
 	Values struct {
 		RootModule *Module `json:"root_module"`
 	} `json:"values"`
+
+	// v4 fallback
+	ResourcesV4 []legacyRes `json:"resources"`
 }
 
 type Module struct {
@@ -83,24 +106,64 @@ func (s *State) allResources() []StateResource {
 }
 
 func (s *State) Resources() []Resource {
-	var out []Resource
-	for _, r := range s.allResources() {
-		res := Resource{
-			Type:       r.Type,
-			Name:       r.Name,
-			Provider:   r.Provider,
-			ModulePath: modulePathFromAddress(r.Address),
-			Instance:   instanceSuffix(r.Index),
-			DependsOn:  absolutizeDeps(r.Dep, r.Address),
-			Tags:       mapStringString(r.Attr, "tags"),
+	// v5 path
+	if s.Values.RootModule != nil {
+		var out []Resource
+		for _, r := range s.allResources() {
+			out = append(out, resourceFromV5(r))
 		}
-		res.RealID = firstString(r.Attr, []string{"arn", "id", "name", "bucket", "vpc_id"})
-		res.Account = inferAccount(r.Attr)
-		res.Region = inferRegion(r.Attr)
-		res.References = guessRefs(r.Attr)
-		out = append(out, res)
+		return out
+	}
+	// v4 path
+	return resourcesFromV4(s.ResourcesV4)
+}
+
+func resourceFromV5(r StateResource) Resource {
+	res := Resource{
+		Type:       r.Type,
+		Name:       r.Name,
+		Provider:   r.Provider,
+		ModulePath: modulePathFromAddress(r.Address),
+		Instance:   instanceSuffix(r.Index),
+		DependsOn:  absolutizeDeps(r.Dep, r.Address),
+		Tags:       mapStringString(r.Attr, "tags"),
+	}
+	res.RealID = firstString(r.Attr, []string{"arn", "id", "name", "bucket", "vpc_id"})
+	res.Account = inferAccount(r.Attr)
+	res.Region = inferRegion(r.Attr)
+	res.References = guessRefs(r.Attr)
+	return res
+}
+
+func resourcesFromV4(rr []legacyRes) []Resource {
+	out := make([]Resource, 0, len(rr))
+	for _, r := range rr {
+		for _, inst := range r.Instances {
+			attrs := inst.Attributes
+			res := Resource{
+				Type:       r.Type,
+				Name:       r.Name,
+				Provider:   trimProviderV4(r.Provider),
+				ModulePath: "module." + groupForType(r.Type), // <- synth group
+				Instance:   instanceSuffix(inst.IndexKey),
+				Tags:       mapStringString(attrs, "tags"),
+			}
+			res.RealID = firstString(attrs, []string{"arn", "id", "name", "bucket", "vpc_id"})
+			res.Account = inferAccount(attrs)
+			res.Region = inferRegion(attrs)
+			res.References = guessRefs(attrs) // see below
+			out = append(out, res)
+		}
 	}
 	return out
+}
+
+func trimProviderV4(p string) string {
+	// e.g. provider["registry.terraform.io/hashicorp/aws"] -> aws
+	if i := strings.LastIndex(p, "/"); i >= 0 && strings.HasSuffix(p, `"]`) {
+		return p[i+1 : len(p)-2]
+	}
+	return p
 }
 
 // helpers
@@ -205,6 +268,84 @@ func inferRegion(attrs map[string]interface{}) string {
 }
 
 func guessRefs(attrs map[string]interface{}) []string {
-	// Minimal placeholder: in real version parse expressions from HCL.
-	return nil
+	out := []string{}
+
+	isRef := func(s string) bool {
+		return strings.HasPrefix(s, "arn:") ||
+			strings.HasPrefix(s, "vpc-") ||
+			strings.HasPrefix(s, "subnet-") ||
+			strings.HasPrefix(s, "sg-") ||
+			strings.HasPrefix(s, "i-")
+	}
+
+	var visit func(v interface{})
+	visit = func(v interface{}) {
+		switch x := v.(type) {
+		case string:
+			if isRef(x) {
+				out = append(out, x)
+			}
+		case []interface{}:
+			for _, e := range x {
+				visit(e)
+			}
+		case map[string]interface{}:
+			for _, e := range x {
+				visit(e)
+			}
+		}
+	}
+
+	for _, v := range attrs {
+		visit(v)
+	}
+	return out
+}
+
+// add near the top
+func groupForType(t string) string {
+	switch {
+	// networking
+	case strings.HasPrefix(t, "aws_vpc"),
+		strings.HasPrefix(t, "aws_subnet"),
+		strings.HasPrefix(t, "aws_route"),
+		strings.HasPrefix(t, "aws_route_table"),
+		strings.HasPrefix(t, "aws_internet_gateway"),
+		strings.HasPrefix(t, "aws_nat_gateway"),
+		strings.HasPrefix(t, "aws_eip"),
+		strings.HasPrefix(t, "aws_security_group"):
+		return "vpc"
+	// container/compute platforms
+	case strings.HasPrefix(t, "aws_eks_"),
+		strings.HasPrefix(t, "aws_ecs_"),
+		strings.HasPrefix(t, "aws_ecr_"),
+		strings.HasPrefix(t, "aws_lb"),
+		strings.HasPrefix(t, "aws_elb"):
+		return "eks"
+	// data
+	case strings.HasPrefix(t, "aws_rds_"),
+		strings.HasPrefix(t, "aws_db_"),
+		strings.HasPrefix(t, "aws_elasticache_"),
+		strings.HasPrefix(t, "aws_opensearch_"),
+		strings.HasPrefix(t, "aws_elasticsearch_"):
+		return "db"
+	// identity
+	case strings.HasPrefix(t, "aws_iam_"):
+		return "iam"
+	// storage
+	case strings.HasPrefix(t, "aws_s3_"):
+		return "s3"
+	// messaging
+	case strings.HasPrefix(t, "aws_sns_"),
+		strings.HasPrefix(t, "aws_sqs_"),
+		strings.HasPrefix(t, "aws_msk_"):
+		return "messaging"
+	// serverless/app
+	case strings.HasPrefix(t, "aws_lambda_"),
+		strings.HasPrefix(t, "aws_apigateway"),
+		strings.HasPrefix(t, "aws_apigatewayv2_"):
+		return "app"
+	default:
+		return "misc"
+	}
 }

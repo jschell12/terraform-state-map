@@ -13,38 +13,45 @@ func BuildFromState(st *terraform.State) Graph {
 	edges := make([]Edge, 0, 512)
 	compounds := map[string][]string{}
 
+	// build nodes
 	for _, r := range st.Resources() {
 		addr := r.Address()
 		if idx[addr] {
 			continue
 		}
 		layer := classifyLayer(r.Type)
-		n := Node{
-			ID:         addr,
-			Type:       r.Type,
-			Icon:       iconFor(r.Type),
-			Account:    r.Account,
-			Region:     r.Region,
-			ModulePath: r.ModulePath,
-			Provider:   r.Provider,
-			URN:        r.RealID,
-			Tags:       r.Tags,
-			Layer:      layer,
-		}
+		n := Node{ID: addr, Type: r.Type, Icon: iconFor(r.Type),
+			Account: r.Account, Region: r.Region, ModulePath: r.ModulePath,
+			Provider: r.Provider, URN: r.RealID, Tags: r.Tags, Layer: layer}
 		nodes = append(nodes, n)
 		idx[addr] = true
-
 		if r.ModulePath != "" {
 			compounds[r.ModulePath] = append(compounds[r.ModulePath], addr)
 		}
+	}
 
-		for _, dep := range r.DependsOn {
-			edges = append(edges, Edge{Source: addr, Target: dep, Kind: "dep"})
-		}
-		for _, ref := range r.References {
-			edges = append(edges, Edge{Source: addr, Target: ref, Kind: "ref"})
+	// index by URN/id to resolve string refs
+	byURN := make(map[string]string, len(nodes))
+	for _, n := range nodes {
+		if n.URN != "" {
+			byURN[n.URN] = n.ID
 		}
 	}
+
+	// add edges from deps and resolved refs
+	for _, r := range st.Resources() {
+		src := r.Address()
+		for _, dep := range r.DependsOn {
+			edges = append(edges, Edge{Source: src, Target: dep, Kind: "dep"})
+		}
+		for _, ref := range r.References {
+			if tgt, ok := byURN[ref]; ok {
+				edges = append(edges, Edge{Source: src, Target: tgt, Kind: "ref"})
+			}
+		}
+	}
+
+	// ... keep sorting + compounds slice as you had ...
 
 	// determinism
 	sort.Slice(nodes, func(i, j int) bool { return nodes[i].ID < nodes[j].ID })
