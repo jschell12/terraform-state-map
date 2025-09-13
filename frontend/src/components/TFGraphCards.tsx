@@ -4,6 +4,7 @@ import cytoscape, { ElementDefinition } from "cytoscape";
 import fcose from "cytoscape-fcose";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
+import { Link } from "react-router-dom";
 
 // npm i cytoscape cytoscape-fcose
 cytoscape.use(fcose);
@@ -91,12 +92,28 @@ function MiniCy({ elements }: { elements: ElementDefinition[] }) {
         cy.add(elements);
         cy.endBatch();
 
-        requestAnimationFrame(() => {
-            if (!cyRef.current) return;
-            cy.resize();
-            cy.layout({ name: "fcose", quality: "draft", randomize: true, animate: false, nodeSeparation: 60 }).run();
-            cy.fit(undefined, 20);
-        });
+        const nodeCount = elements.filter(e => (e as any).data?.id && !(e as any).data?.source).length;
+        const k = Math.max(1, Math.log10(Math.max(10, nodeCount))); // 1..~
+        const nodeSeparation = 50 + 30 * k;          // spread more for larger graphs
+        const repulsion = 4000 * k;                  // stronger repulsion
+        const idealEdge = 80 + 30 * k;               // longer edges
+
+        const layout = cy.layout({
+            name: "fcose",
+            quality: "default",
+            randomize: true,
+            animate: false,
+            nodeSeparation,
+            nodeRepulsion: () => repulsion,
+            idealEdgeLength: () => idealEdge,
+            edgeElasticity: () => 0.2,
+            packComponents: true,
+            nodeDimensionsIncludeLabels: true,         // <- key to avoid label overlap
+        } as any);
+
+        // fit after layout completes
+        cy.one("layoutstop", () => cy.fit(undefined, 20));
+        layout.run();
     }, [elements]);
 
     // inline height avoids Tailwind purge/mis-measure
@@ -112,7 +129,7 @@ function MiniCy({ elements }: { elements: ElementDefinition[] }) {
 // below your GraphJson type
 type Group = { nodes: GraphJson["nodes"]; edges: GraphJson["edges"] };
 
-function buildGroups(g: GraphJson): Map<string, Group> {
+export function buildGroups(g: GraphJson): Map<string, Group> {
     const by = new Map<string, Group>();
     g.nodes?.forEach((n) => {
         const k = topModule(n.modulePath);
@@ -127,8 +144,6 @@ function buildGroups(g: GraphJson): Map<string, Group> {
     });
     return by;
 }
-
-
 
 export default function TfGraphCards({ graph }: { graph?: GraphJson }) {
     // Optional local file loader for convenience
@@ -281,6 +296,7 @@ export default function TfGraphCards({ graph }: { graph?: GraphJson }) {
                     const counts = { foundations: 0, platforms: 0, apps: 0 } as Record<string, number>;
                     const accounts = new Set<string>();
                     const regions = new Set<string>();
+
                     g.nodes.forEach((n) => {
                         if ((n as any).layer && counts[(n as any).layer] !== undefined) counts[(n as any).layer]++;
                         if ((n as any).account) accounts.add((n as any).account);
@@ -308,6 +324,12 @@ export default function TfGraphCards({ graph }: { graph?: GraphJson }) {
                                         <Badge variant="outline">F:{counts.foundations}</Badge>
                                         <Badge variant="outline">P:{counts.platforms}</Badge>
                                         <Badge variant="outline">A:{counts.apps}</Badge>
+                                        <Link
+                                            to={`/groups/${key}`}
+                                            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+                                        >
+                                            View
+                                        </Link>
                                     </div>
                                 </div>
                             </CardHeader>
